@@ -54,4 +54,20 @@ public class Ong {
         this.senha = senha;
         this.cnpj = cnpj;
     }
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getNome() {
+        return nome;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public String getCnpj() {
+        return cnpj;
+    }
 }

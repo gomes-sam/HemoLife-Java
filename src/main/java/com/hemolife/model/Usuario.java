@@ -63,6 +63,30 @@ public class Usuario {
         this.perfil = perfil;
     }
 
+    public Long getId() {
+        return id;
+    }
+
+    public String getNome() {
+        return nome;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public String getSenha() {
+        return senha;
+    }
+
+    public String getTipoSanguineo() {
+        return tipoSanguineo;
+    }
+
+    public PerfilUsuario getPerfil() {
+        return perfil;
+    }
+
     @AssertTrue(message = "Usuario doador deve possuir tipo sanguineo.")
     public boolean isTipoSanguineoValidoParaPerfil() {
         return perfil != PerfilUsuario.DOADOR || (tipoSanguineo != null && !tipoSanguineo.isBlank());

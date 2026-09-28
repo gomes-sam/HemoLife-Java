@@ -41,4 +41,20 @@ public class Unidade {
         this.telefone = telefone;
         this.endereco = endereco;
     }
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getNome() {
+        return nome;
+    }
+
+    public String getTelefone() {
+        return telefone;
+    }
+
+    public String getEndereco() {
+        return endereco;
+    }
 }

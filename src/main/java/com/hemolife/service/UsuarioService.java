@@ -27,20 +27,22 @@ public class UsuarioService {
     public UsuarioResponse criar(String nome, String email, String senha, String tipoSanguineo, String perfil) {
         String nomeNormalizado = ValidacoesNegocio.texto(nome, "nome");
         String emailNormalizado = ValidacoesNegocio.email(email);
-        String senhaValidada = ValidacoesNegocio.senha(senha, false);
-        PerfilUsuario perfilUsuario = interpretarPerfil(perfil);
-        String tipo = tipoSanguineo == null ? null : tipoSanguineo.trim();
-        if (perfilUsuario == PerfilUsuario.ADMIN) {
-            tipo = null;
-        } else if (tipo == null || tipo.isBlank()) {
-            throw new TipoSanguineoObrigatorioException();
-        }
+        String senhaNormalizada = ValidacoesNegocio.senha(senha, false);
+        PerfilUsuario perfilNormalizado = converterPerfil(perfil);
+        String tipoSanguineoNormalizado = normalizarTipoSanguineo(tipoSanguineo, perfilNormalizado);
+
         if (usuarioRepository.existsByEmailIgnoreCase(emailNormalizado)) {
             throw new EmailJaCadastradoException();
         }
 
-        Usuario usuario = new Usuario(nomeNormalizado, emailNormalizado,
-                passwordEncoder.encode(senhaValidada), tipo, perfilUsuario);
+        Usuario usuario = new Usuario(
+                nomeNormalizado,
+                emailNormalizado,
+                passwordEncoder.encode(senhaNormalizada),
+                tipoSanguineoNormalizado,
+                perfilNormalizado
+        );
+
         try {
             return UsuarioResponse.de(usuarioRepository.saveAndFlush(usuario));
         } catch (DataIntegrityViolationException exception) {
@@ -58,18 +60,31 @@ public class UsuarioService {
     }
 
     public UsuarioResponse buscarPorEmail(String email) {
-        return usuarioRepository.findByEmailIgnoreCase(ValidacoesNegocio.email(email))
-                .map(UsuarioResponse::de).orElseThrow(UsuarioNaoEncontradoException::new);
+        String emailNormalizado = ValidacoesNegocio.email(email);
+        return usuarioRepository.findByEmailIgnoreCase(emailNormalizado).map(UsuarioResponse::de)
+                .orElseThrow(UsuarioNaoEncontradoException::new);
     }
 
-    private PerfilUsuario interpretarPerfil(String perfil) {
+    private PerfilUsuario converterPerfil(String perfil) {
         if (perfil == null || perfil.isBlank()) {
             throw new PerfilInvalidoException();
         }
-        try {
-            return PerfilUsuario.valueOf(perfil.trim().toUpperCase(Locale.ROOT));
-        } catch (IllegalArgumentException exception) {
-            throw new PerfilInvalidoException();
+        String valor = perfil.trim().toLowerCase(Locale.ROOT);
+        for (PerfilUsuario perfilUsuario : PerfilUsuario.values()) {
+            if (perfilUsuario.getValor().equals(valor) || perfilUsuario.name().equalsIgnoreCase(valor)) {
+                return perfilUsuario;
+            }
         }
+        throw new PerfilInvalidoException();
+    }
+
+    private String normalizarTipoSanguineo(String tipoSanguineo, PerfilUsuario perfil) {
+        if (perfil == PerfilUsuario.ADMIN) {
+            return null;
+        }
+        if (tipoSanguineo == null || tipoSanguineo.isBlank()) {
+            throw new TipoSanguineoObrigatorioException();
+        }
+        return tipoSanguineo.trim();
     }
 }

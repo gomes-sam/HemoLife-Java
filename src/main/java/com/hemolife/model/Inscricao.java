@@ -39,4 +39,16 @@ public class Inscricao {
         this.usuario = usuario;
         this.ong = ong;
     }
+
+    public Long getId() {
+        return id;
+    }
+
+    public Usuario getUsuario() {
+        return usuario;
+    }
+
+    public Ong getOng() {
+        return ong;
+    }
 }

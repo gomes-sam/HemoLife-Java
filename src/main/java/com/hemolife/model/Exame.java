@@ -107,6 +107,38 @@ public class Exame {
         return horario.format(FORMATO_HORARIO);
     }
 
+    public Long getId() {
+        return id;
+    }
+
+    public Usuario getUsuario() {
+        return usuario;
+    }
+
+    public Ong getOng() {
+        return ong;
+    }
+
+    public Unidade getUnidade() {
+        return unidade;
+    }
+
+    public LocalDate getDataExame() {
+        return dataExame;
+    }
+
+    public StatusExame getStatus() {
+        return status;
+    }
+
+    public LocalDateTime getCriadoEm() {
+        return criadoEm;
+    }
+
+    public String getArquivoId() {
+        return arquivoId;
+    }
+
     public void definirArquivoId(String arquivoId) {
         if (arquivoId != null && !arquivoId.matches("[0-9a-fA-F]{24}")) {
             throw new IllegalArgumentException("O arquivoId deve ser um ObjectId de 24 caracteres hexadecimais.");
