@@ -31,60 +31,311 @@ import java.util.List;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class ExameService {
+
     private final ExameRepository exameRepository;
     private final UsuarioRepository usuarioRepository;
     private final OngRepository ongRepository;
     private final InscricaoRepository inscricaoRepository;
     private final UnidadeRepository unidadeRepository;
 
-    @Transactional
-    public ExameResponse agendar(Long usuarioId, Long ongId, Long unidadeId, LocalDate dataExame, String horario) {
-        ValidacoesNegocio.obrigatorio(usuarioId, "usuarioId");
-        ValidacoesNegocio.obrigatorio(ongId, "ongId");
-        ValidacoesNegocio.obrigatorio(unidadeId, "unidadeId");
-        ValidacoesNegocio.obrigatorio(dataExame, "dataExame");
-        ValidacoesNegocio.texto(horario, "horario");
+    // ==========================================
+    // AGENDAR EXAME
+    // ==========================================
 
-        Usuario usuario = usuarioRepository.findById(usuarioId).orElseThrow(UsuarioNaoEncontradoException::new);
-        Ong ong = ongRepository.findById(ongId).orElseThrow(OngNaoEncontradaException::new);
-        if (!inscricaoRepository.existsByUsuarioIdAndOngId(usuarioId, ongId)) {
+    @Transactional
+    public ExameResponse agendar(
+            Long usuarioId,
+            Long ongId,
+            Long unidadeId,
+            LocalDate dataExame,
+            String horario
+    ) {
+
+        ValidacoesNegocio.obrigatorio(
+                usuarioId,
+                "usuarioId"
+        );
+
+        ValidacoesNegocio.obrigatorio(
+                ongId,
+                "ongId"
+        );
+
+        ValidacoesNegocio.obrigatorio(
+                unidadeId,
+                "unidadeId"
+        );
+
+        ValidacoesNegocio.obrigatorio(
+                dataExame,
+                "dataExame"
+        );
+
+        ValidacoesNegocio.texto(
+                horario,
+                "horario"
+        );
+
+        Usuario usuario = usuarioRepository
+                .findById(usuarioId)
+                .orElseThrow(
+                        UsuarioNaoEncontradoException::new
+                );
+
+        Ong ong = ongRepository
+                .findById(ongId)
+                .orElseThrow(
+                        OngNaoEncontradaException::new
+                );
+
+        if (!inscricaoRepository
+                .existsByUsuarioIdAndOngId(
+                        usuarioId,
+                        ongId
+                )) {
+
             throw new UsuarioNaoInscritoException();
         }
-        Unidade unidade = unidadeRepository.findById(unidadeId).orElseThrow(UnidadeNaoEncontradaException::new);
+
+        Unidade unidade = unidadeRepository
+                .findById(unidadeId)
+                .orElseThrow(
+                        UnidadeNaoEncontradaException::new
+                );
+
         if (dataExame.isBefore(LocalDate.now())) {
             throw new DataExameInvalidaException();
         }
-        if (!horario.matches("(?:[01][0-9]|2[0-3]):[0-5][0-9]")) {
+
+        if (!horario.matches(
+                "(?:[01][0-9]|2[0-3]):[0-5][0-9]"
+        )) {
             throw new HorarioInvalidoException();
         }
-        LocalTime hora = LocalTime.parse(horario);
-        if (exameRepository.existsByUsuarioIdAndDataExameAndHorario(usuarioId, dataExame, hora)) {
+
+        LocalTime hora =
+                LocalTime.parse(horario);
+
+        if (exameRepository
+                .existsByUsuarioIdAndDataExameAndHorario(
+                        usuarioId,
+                        dataExame,
+                        hora
+                )) {
+
             throw new ConflitoAgendamentoException();
         }
-        Exame exame = Exame.agendar(usuario, ong, unidade, dataExame, hora);
+
+        Exame exame = Exame.agendar(
+                usuario,
+                ong,
+                unidade,
+                dataExame,
+                hora
+        );
+
         try {
-            return ExameResponse.de(exameRepository.saveAndFlush(exame));
+
+            return ExameResponse.de(
+                    exameRepository.saveAndFlush(exame)
+            );
+
         } catch (DataIntegrityViolationException exception) {
-            if (ConflitosPersistencia.violou(exception, "23505", "uk_exames_usuario_data_horario")) {
+
+            if (ConflitosPersistencia.violou(
+                    exception,
+                    "23505",
+                    "uk_exames_usuario_data_horario"
+            )) {
+
                 throw new ConflitoAgendamentoException();
             }
+
             throw exception;
         }
     }
 
-    public List<ExameResponse> listarDoUsuario(Long usuarioId) {
-        ValidacoesNegocio.obrigatorio(usuarioId, "usuarioId");
-        return exameRepository.findByUsuarioIdOrderByDataExameAscHorarioAsc(usuarioId).stream()
-                .map(ExameResponse::de).toList();
+    // ==========================================
+    // LISTAR EXAMES DO USUÁRIO
+    // ==========================================
+
+    public List<ExameResponse> listarDoUsuario(
+            Long usuarioId
+    ) {
+
+        ValidacoesNegocio.obrigatorio(
+                usuarioId,
+                "usuarioId"
+        );
+
+        return exameRepository
+                .findByUsuarioIdOrderByDataExameAscHorarioAsc(
+                        usuarioId
+                )
+                .stream()
+                .map(ExameResponse::de)
+                .toList();
     }
 
+    // ==========================================
+    // CANCELAR EXAME
+    // ==========================================
+
     @Transactional
-    public ExameResponse cancelar(Long usuarioId, Long exameId) {
-        ValidacoesNegocio.obrigatorio(usuarioId, "usuarioId");
-        ValidacoesNegocio.obrigatorio(exameId, "exameId");
-        Exame exame = exameRepository.findByIdAndUsuarioId(exameId, usuarioId)
-                .orElseThrow(ExameNaoEncontradoException::new);
+    public ExameResponse cancelar(
+            Long usuarioId,
+            Long exameId
+    ) {
+
+        ValidacoesNegocio.obrigatorio(
+                usuarioId,
+                "usuarioId"
+        );
+
+        ValidacoesNegocio.obrigatorio(
+                exameId,
+                "exameId"
+        );
+
+        Exame exame = buscarExameDoUsuario(
+                usuarioId,
+                exameId
+        );
+
         exame.cancelar();
-        return ExameResponse.de(exameRepository.saveAndFlush(exame));
+
+        return ExameResponse.de(
+                exameRepository.saveAndFlush(exame)
+        );
+    }
+
+    // ==========================================
+    // VINCULAR ARQUIVO DO MONGODB AO EXAME
+    // ==========================================
+
+    @Transactional
+    public ExameResponse vincularArquivo(
+            Long usuarioId,
+            Long exameId,
+            String arquivoId
+    ) {
+
+        ValidacoesNegocio.obrigatorio(
+                usuarioId,
+                "usuarioId"
+        );
+
+        ValidacoesNegocio.obrigatorio(
+                exameId,
+                "exameId"
+        );
+
+        if (arquivoId == null || arquivoId.isBlank()) {
+            throw new IllegalArgumentException(
+                    "O arquivoId deve ser informado."
+            );
+        }
+
+        Exame exame = buscarExameDoUsuario(
+                usuarioId,
+                exameId
+        );
+
+        /*
+         * A própria entidade Exame valida se o ID
+         * possui 24 caracteres hexadecimais.
+         */
+        exame.definirArquivoId(arquivoId);
+
+        return ExameResponse.de(
+                exameRepository.saveAndFlush(exame)
+        );
+    }
+
+    // ==========================================
+    // BUSCAR OBJECTID DO ARQUIVO
+    // ==========================================
+
+    public String buscarArquivoId(
+            Long usuarioId,
+            Long exameId
+    ) {
+
+        ValidacoesNegocio.obrigatorio(
+                usuarioId,
+                "usuarioId"
+        );
+
+        ValidacoesNegocio.obrigatorio(
+                exameId,
+                "exameId"
+        );
+
+        Exame exame = buscarExameDoUsuario(
+                usuarioId,
+                exameId
+        );
+
+        String arquivoId =
+                exame.getArquivoId();
+
+        if (arquivoId == null || arquivoId.isBlank()) {
+            throw new IllegalArgumentException(
+                    "O exame nao possui arquivo."
+            );
+        }
+
+        return arquivoId;
+    }
+
+    // ==========================================
+    // REMOVER REFERÊNCIA DO ARQUIVO
+    // ==========================================
+
+    @Transactional
+    public ExameResponse removerArquivo(
+            Long usuarioId,
+            Long exameId
+    ) {
+
+        ValidacoesNegocio.obrigatorio(
+                usuarioId,
+                "usuarioId"
+        );
+
+        ValidacoesNegocio.obrigatorio(
+                exameId,
+                "exameId"
+        );
+
+        Exame exame = buscarExameDoUsuario(
+                usuarioId,
+                exameId
+        );
+
+        exame.definirArquivoId(null);
+
+        return ExameResponse.de(
+                exameRepository.saveAndFlush(exame)
+        );
+    }
+
+    // ==========================================
+    // MÉTODO AUXILIAR
+    // ==========================================
+
+    private Exame buscarExameDoUsuario(
+            Long usuarioId,
+            Long exameId
+    ) {
+
+        return exameRepository
+                .findByIdAndUsuarioId(
+                        exameId,
+                        usuarioId
+                )
+                .orElseThrow(
+                        ExameNaoEncontradoException::new
+                );
     }
 }

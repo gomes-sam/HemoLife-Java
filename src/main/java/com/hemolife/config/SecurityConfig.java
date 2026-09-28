@@ -8,6 +8,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -18,36 +19,55 @@ import java.util.List;
 @Configuration(proxyBeanMethods = false)
 public class SecurityConfig {
 
+    private final SessionAuthenticationFilter sessionAuthenticationFilter;
+
+    public SecurityConfig(
+            SessionAuthenticationFilter sessionAuthenticationFilter
+    ) {
+        this.sessionAuthenticationFilter = sessionAuthenticationFilter;
+    }
+
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http
+    ) throws Exception {
 
         return http
 
-                // React roda em localhost:5173 e precisa acessar o Spring em localhost:5000
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .cors(cors ->
+                        cors.configurationSource(corsConfigurationSource())
+                )
 
-                // Para o ambiente local/acadêmico.
-                // Em produção, o ideal é configurar CSRF corretamente.
+                // Ambiente local/acadêmico.
                 .csrf(AbstractHttpConfigurer::disable)
 
-                // O HemoLife usa autenticação por sessão/cookie.
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                // Necessário para HttpSession / JSESSIONID.
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(
+                                SessionCreationPolicy.IF_REQUIRED
+                        )
                 )
 
                 .authorizeHttpRequests(authorize -> authorize
 
-                        // Importante: permite que erros reais como 404 apareçam
-                        // em vez de serem transformados em "Login required".
+                        // ==========================================
+                        // ERRO
+                        // ==========================================
                         .requestMatchers("/error").permitAll()
 
-                        // Preflight do navegador
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        // ==========================================
+                        // PREFLIGHT / CORS
+                        // ==========================================
+                        .requestMatchers(
+                                HttpMethod.OPTIONS,
+                                "/**"
+                        ).permitAll()
 
                         // ==========================================
-                        // ROTAS DE TESTE
+                        // TESTES
                         // ==========================================
-                        .requestMatchers(HttpMethod.GET,
+                        .requestMatchers(
+                                HttpMethod.GET,
                                 "/api/teste",
                                 "/api/teste-postgres",
                                 "/api/teste-mongo"
@@ -56,65 +76,68 @@ public class SecurityConfig {
                         // ==========================================
                         // APIs PÚBLICAS
                         // ==========================================
-                        .requestMatchers(HttpMethod.GET,
+                        .requestMatchers(
+                                HttpMethod.GET,
                                 "/api/unidades",
                                 "/api/ongs"
                         ).permitAll()
 
                         // ==========================================
-                        // USUÁRIO - LOGIN / CADASTRO / SESSÃO
+                        // USUÁRIOS - PÚBLICO
                         // ==========================================
-                        .requestMatchers(HttpMethod.POST,
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/usuarios/cadastrar",
                                 "/usuarios/login",
-                                "/usuarios/cadastrar"
+                                "/usuarios/logout"
                         ).permitAll()
 
-                        .requestMatchers(HttpMethod.GET,
+                        .requestMatchers(
+                                HttpMethod.GET,
                                 "/usuarios/session"
                         ).permitAll()
 
-                        .requestMatchers(HttpMethod.POST,
-                                "/usuarios/logout"
-                        ).authenticated()
-
                         // ==========================================
-                        // ONG - LOGIN / CADASTRO / SESSÃO
+                        // ONG - PÚBLICO
                         // ==========================================
-                        .requestMatchers(HttpMethod.POST,
+                        .requestMatchers(
+                                HttpMethod.POST,
                                 "/ong/login",
-                                "/ong/cadastrar"
+                                "/ong/cadastrar",
+                                "/ong/logout"
                         ).permitAll()
 
-                        .requestMatchers(HttpMethod.GET,
+                        .requestMatchers(
+                                HttpMethod.GET,
                                 "/ong/session"
                         ).permitAll()
-
-                        .requestMatchers(HttpMethod.POST,
-                                "/ong/logout"
-                        ).authenticated()
 
                         // ==========================================
                         // ADMIN
                         // ==========================================
-                        .requestMatchers("/usuarios/admin/**")
-                        .hasRole("ADMIN")
+                        .requestMatchers(
+                                "/usuarios/admin/**"
+                        ).hasRole("ADMIN")
 
                         // ==========================================
                         // ONG AUTENTICADA
                         // ==========================================
-                        .requestMatchers(HttpMethod.GET,
+                        .requestMatchers(
+                                HttpMethod.GET,
                                 "/ong/membros"
                         ).hasRole("ONG")
 
                         // ==========================================
-                        // DOADOR - ONGS
+                        // DOADOR - ONGs
                         // ==========================================
-                        .requestMatchers(HttpMethod.GET,
+                        .requestMatchers(
+                                HttpMethod.GET,
                                 "/usuarios/ongs",
                                 "/usuarios/minhas-ongs"
                         ).hasRole("DOADOR")
 
-                        .requestMatchers(HttpMethod.POST,
+                        .requestMatchers(
+                                HttpMethod.POST,
                                 "/usuarios/ongs/inscrever/**",
                                 "/usuarios/ongs/cancelar/**"
                         ).hasRole("DOADOR")
@@ -122,36 +145,51 @@ public class SecurityConfig {
                         // ==========================================
                         // DOADOR - EXAMES
                         // ==========================================
-                        .requestMatchers(HttpMethod.GET,
-                                "/usuarios/exames"
+
+                        // Lista exames e baixa arquivo do MongoDB/GridFS.
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/usuarios/exames",
+                                "/usuarios/exames/*/arquivo"
                         ).hasRole("DOADOR")
 
-                        .requestMatchers(HttpMethod.POST,
+                        // Agenda, cancela e envia arquivo para GridFS.
+                        .requestMatchers(
+                                HttpMethod.POST,
                                 "/usuarios/exames",
-                                "/usuarios/exames/*/cancelar"
+                                "/usuarios/exames/*/cancelar",
+                                "/usuarios/exames/*/arquivo"
+                        ).hasRole("DOADOR")
+
+                        // Remove arquivo do MongoDB/GridFS.
+                        .requestMatchers(
+                                HttpMethod.DELETE,
+                                "/usuarios/exames/*/arquivo"
                         ).hasRole("DOADOR")
 
                         // ==========================================
                         // HOME
                         // ==========================================
-                        .requestMatchers(HttpMethod.GET,
+                        .requestMatchers(
+                                HttpMethod.GET,
                                 "/usuarios/home"
                         ).authenticated()
 
-                        // Todo o restante permanece bloqueado.
+                        // Qualquer rota não configurada é bloqueada.
                         .anyRequest().denyAll()
                 )
 
-                // Não queremos tela padrão de login do Spring
+                // Converte os dados da HttpSession
+                // em autenticação reconhecida pelo Spring Security.
+                .addFilterBefore(
+                        sessionAuthenticationFilter,
+                        UsernamePasswordAuthenticationFilter.class
+                )
+
                 .formLogin(AbstractHttpConfigurer::disable)
-
-                // Não usar autenticação HTTP Basic
                 .httpBasic(AbstractHttpConfigurer::disable)
-
-                // Evita redirecionamentos automáticos do Spring Security
                 .requestCache(AbstractHttpConfigurer::disable)
 
-                // Respostas JSON para 401 e 403
                 .exceptionHandling(exception -> exception
 
                         .authenticationEntryPoint(
@@ -179,15 +217,14 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
 
-        CorsConfiguration configuration = new CorsConfiguration();
+        CorsConfiguration configuration =
+                new CorsConfiguration();
 
-        // Frontend React
         configuration.setAllowedOrigins(List.of(
                 "http://localhost:5173",
                 "http://127.0.0.1:5173"
         ));
 
-        // Métodos aceitos
         configuration.setAllowedMethods(List.of(
                 "GET",
                 "POST",
@@ -196,16 +233,20 @@ public class SecurityConfig {
                 "OPTIONS"
         ));
 
-        // Headers aceitos
-        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowedHeaders(
+                List.of("*")
+        );
 
-        // Necessário para credentials: 'include'
+        // Necessário para enviar o cookie JSESSIONID.
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source =
                 new UrlBasedCorsConfigurationSource();
 
-        source.registerCorsConfiguration("/**", configuration);
+        source.registerCorsConfiguration(
+                "/**",
+                configuration
+        );
 
         return source;
     }

@@ -20,16 +20,33 @@ import java.util.Locale;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class UsuarioService {
+
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
-    public UsuarioResponse criar(String nome, String email, String senha, String tipoSanguineo, String perfil) {
+    public UsuarioResponse criar(
+            String nome,
+            String email,
+            String senha,
+            String tipoSanguineo,
+            String perfil
+    ) {
         String nomeNormalizado = ValidacoesNegocio.texto(nome, "nome");
         String emailNormalizado = ValidacoesNegocio.email(email);
-        String senhaNormalizada = ValidacoesNegocio.senha(senha, false);
-        PerfilUsuario perfilNormalizado = converterPerfil(perfil);
-        String tipoSanguineoNormalizado = normalizarTipoSanguineo(tipoSanguineo, perfilNormalizado);
+        String senhaValidada = ValidacoesNegocio.senha(senha, false);
+
+        PerfilUsuario perfilUsuario = interpretarPerfil(perfil);
+
+        String tipo = tipoSanguineo == null
+                ? null
+                : tipoSanguineo.trim();
+
+        if (perfilUsuario == PerfilUsuario.ADMIN) {
+            tipo = null;
+        } else if (tipo == null || tipo.isBlank()) {
+            throw new TipoSanguineoObrigatorioException();
+        }
 
         if (usuarioRepository.existsByEmailIgnoreCase(emailNormalizado)) {
             throw new EmailJaCadastradoException();
@@ -38,53 +55,117 @@ public class UsuarioService {
         Usuario usuario = new Usuario(
                 nomeNormalizado,
                 emailNormalizado,
-                passwordEncoder.encode(senhaNormalizada),
-                tipoSanguineoNormalizado,
-                perfilNormalizado
+                passwordEncoder.encode(senhaValidada),
+                tipo,
+                perfilUsuario
         );
 
         try {
-            return UsuarioResponse.de(usuarioRepository.saveAndFlush(usuario));
+            return UsuarioResponse.de(
+                    usuarioRepository.saveAndFlush(usuario)
+            );
         } catch (DataIntegrityViolationException exception) {
-            if (ConflitosPersistencia.violou(exception, "23505", "uk_usuarios_email")) {
+
+            if (ConflitosPersistencia.violou(
+                    exception,
+                    "23505",
+                    "uk_usuarios_email"
+            )) {
                 throw new EmailJaCadastradoException();
             }
+
             throw exception;
         }
     }
 
+    public UsuarioResponse autenticar(
+            String email,
+            String senha,
+            String perfil
+    ) {
+        String emailNormalizado =
+                ValidacoesNegocio.email(email);
+
+        if (senha == null || senha.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Credenciais invalidas."
+            );
+        }
+
+        PerfilUsuario perfilUsuario =
+                interpretarPerfil(perfil);
+
+        Usuario usuario = usuarioRepository
+                .findByEmailIgnoreCase(emailNormalizado)
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Credenciais invalidas."
+                        )
+                );
+
+        boolean senhaCorreta = passwordEncoder.matches(
+                senha,
+                usuario.getSenha()
+        );
+
+        if (!senhaCorreta) {
+            throw new IllegalArgumentException(
+                    "Credenciais invalidas."
+            );
+        }
+
+        if (usuario.getPerfil() != perfilUsuario) {
+            throw new IllegalArgumentException(
+                    "Credenciais invalidas."
+            );
+        }
+
+        return UsuarioResponse.de(usuario);
+    }
+
     public UsuarioResponse buscarPorId(Long id) {
-        ValidacoesNegocio.obrigatorio(id, "usuarioId");
-        return usuarioRepository.findById(id).map(UsuarioResponse::de)
-                .orElseThrow(UsuarioNaoEncontradoException::new);
+        ValidacoesNegocio.obrigatorio(
+                id,
+                "usuarioId"
+        );
+
+        return usuarioRepository
+                .findById(id)
+                .map(UsuarioResponse::de)
+                .orElseThrow(
+                        UsuarioNaoEncontradoException::new
+                );
     }
 
-    public UsuarioResponse buscarPorEmail(String email) {
-        String emailNormalizado = ValidacoesNegocio.email(email);
-        return usuarioRepository.findByEmailIgnoreCase(emailNormalizado).map(UsuarioResponse::de)
-                .orElseThrow(UsuarioNaoEncontradoException::new);
+    public UsuarioResponse buscarPorEmail(
+            String email
+    ) {
+        String emailNormalizado =
+                ValidacoesNegocio.email(email);
+
+        return usuarioRepository
+                .findByEmailIgnoreCase(emailNormalizado)
+                .map(UsuarioResponse::de)
+                .orElseThrow(
+                        UsuarioNaoEncontradoException::new
+                );
     }
 
-    private PerfilUsuario converterPerfil(String perfil) {
+    private PerfilUsuario interpretarPerfil(
+            String perfil
+    ) {
         if (perfil == null || perfil.isBlank()) {
             throw new PerfilInvalidoException();
         }
-        String valor = perfil.trim().toLowerCase(Locale.ROOT);
-        for (PerfilUsuario perfilUsuario : PerfilUsuario.values()) {
-            if (perfilUsuario.getValor().equals(valor) || perfilUsuario.name().equalsIgnoreCase(valor)) {
-                return perfilUsuario;
-            }
-        }
-        throw new PerfilInvalidoException();
-    }
 
-    private String normalizarTipoSanguineo(String tipoSanguineo, PerfilUsuario perfil) {
-        if (perfil == PerfilUsuario.ADMIN) {
-            return null;
+        try {
+            return PerfilUsuario.valueOf(
+                    perfil
+                            .trim()
+                            .toUpperCase(Locale.ROOT)
+            );
+        } catch (IllegalArgumentException exception) {
+            throw new PerfilInvalidoException();
         }
-        if (tipoSanguineo == null || tipoSanguineo.isBlank()) {
-            throw new TipoSanguineoObrigatorioException();
-        }
-        return tipoSanguineo.trim();
     }
 }
