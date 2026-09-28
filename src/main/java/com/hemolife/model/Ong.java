@@ -37,7 +37,6 @@ public class Ong {
     @Column(nullable = false)
     private String email;
 
-    /** Hash de senha migrado do Flask, sem implementar autenticacao nesta etapa. */
     @NotBlank
     @Size(max = 255)
     @Column(nullable = false)

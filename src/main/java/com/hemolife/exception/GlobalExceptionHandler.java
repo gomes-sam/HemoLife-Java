@@ -13,9 +13,6 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // ==========================================
-    // CONFLITOS - 409
-    // ==========================================
 
     @ExceptionHandler({
             EmailJaCadastradoException.class,
@@ -33,9 +30,6 @@ public class GlobalExceptionHandler {
         );
     }
 
-    // ==========================================
-    // NÃO ENCONTRADO - 404
-    // ==========================================
 
     @ExceptionHandler({
             UsuarioNaoEncontradoException.class,
@@ -53,9 +47,6 @@ public class GlobalExceptionHandler {
         );
     }
 
-    // ==========================================
-    // REQUISIÇÃO INVÁLIDA - 400
-    // ==========================================
 
     @ExceptionHandler({
             PerfilInvalidoException.class,
@@ -83,9 +74,6 @@ public class GlobalExceptionHandler {
         );
     }
 
-    // ==========================================
-    // SESSÃO INVÁLIDA
-    // ==========================================
 
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<Map<String, Object>> estadoInvalido(
@@ -97,9 +85,6 @@ public class GlobalExceptionHandler {
         );
     }
 
-    // ==========================================
-    // ARQUIVOS / GRIDFS
-    // ==========================================
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<Map<String, Object>> arquivoMuitoGrande(
@@ -121,9 +106,6 @@ public class GlobalExceptionHandler {
         );
     }
 
-    // ==========================================
-    // RESPOSTA PADRÃO
-    // ==========================================
 
     private ResponseEntity<Map<String, Object>> erro(
             HttpStatus status,

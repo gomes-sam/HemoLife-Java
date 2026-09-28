@@ -40,13 +40,6 @@ public class SessionAuthenticationFilter extends OncePerRequestFilter {
             Object perfil =
                     session.getAttribute("perfil");
 
-            /*
-             * Usuário comum:
-             * usuarioId + perfil DOADOR/ADMIN
-             *
-             * ONG:
-             * ongId + perfil ONG
-             */
             Object principalId =
                     usuarioId != null
                             ? usuarioId

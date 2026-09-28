@@ -10,14 +10,12 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Rotas temporarias para verificar as conexoes reais dos adapters registrados. */
 @RestController
 @RequestMapping("/api")
 public class TesteBancoController {
 
     private final DatabaseManager databaseManager;
 
-    // DatabaseConfig fornece a instancia retornada por DatabaseManager.getInstance().
     public TesteBancoController(DatabaseManager databaseManager) {
         this.databaseManager = databaseManager;
     }

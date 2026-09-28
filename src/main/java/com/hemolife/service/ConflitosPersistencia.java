@@ -4,7 +4,6 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import java.util.Arrays;
 
-/** Traduz somente constraints conhecidas; falhas inesperadas continuam sendo propagadas. */
 final class ConflitosPersistencia {
     private ConflitosPersistencia() {
     }

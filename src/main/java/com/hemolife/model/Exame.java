@@ -72,12 +72,10 @@ public class Exame {
     @Column(name = "criado_em", nullable = false, updatable = false)
     private LocalDateTime criadoEm;
 
-    /** Referencia opcional ao ObjectId GridFS; nao e uma chave estrangeira SQL. */
     @Size(max = 24)
     @Column(name = "arquivo_id", length = 24)
     private String arquivoId;
 
-    /** O futuro ExameService deve consultar InscricaoRepository antes de agendar. */
     public static Exame agendar(Usuario usuario, Ong ong, Unidade unidade, LocalDate dataExame, LocalTime horario) {
         Exame exame = new Exame();
         exame.usuario = Objects.requireNonNull(usuario, "O usuario deve ser informado.");
@@ -90,7 +88,6 @@ public class Exame {
         return exame;
     }
 
-    /** Aceita estritamente HH:mm, sem segundos e com zero a esquerda. */
     public static Exame agendar(Usuario usuario, Ong ong, Unidade unidade, LocalDate dataExame, String horario) {
         if (horario == null || !horario.matches("(?:[01][0-9]|2[0-3]):[0-5][0-9]")) {
             throw new IllegalArgumentException("O horario deve utilizar HH:mm.");
@@ -98,7 +95,6 @@ public class Exame {
         return agendar(usuario, ong, unidade, dataExame, LocalTime.parse(horario, FORMATO_HORARIO));
     }
 
-    /** Cancelamento preserva o registro e e idempotente. */
     public void cancelar() {
         status = StatusExame.CANCELADO;
     }

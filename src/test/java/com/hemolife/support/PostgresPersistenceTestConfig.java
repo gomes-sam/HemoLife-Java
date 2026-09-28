@@ -7,7 +7,6 @@ import org.springframework.context.annotation.Bean;
 import javax.sql.DataSource;
 import java.io.IOException;
 
-/** PostgreSQL real, efemero, em porta aleatoria; nunca utiliza o banco da aplicacao. */
 @TestConfiguration(proxyBeanMethods = false)
 public class PostgresPersistenceTestConfig {
 

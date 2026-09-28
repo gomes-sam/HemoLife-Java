@@ -18,7 +18,6 @@ public class PostgresAdapter implements DatabaseAdapter {
 
     @Override
     public void verificarConexao() {
-        // O close devolve a conexao ao pool gerenciado pelo Spring.
         try (Connection connection = dataSource.getConnection()) {
             if (!connection.isValid(5)) {
                 throw new DatabaseConnectionException("Conexao PostgreSQL invalida.");

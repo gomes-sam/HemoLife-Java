@@ -38,9 +38,6 @@ public class ExameService {
     private final InscricaoRepository inscricaoRepository;
     private final UnidadeRepository unidadeRepository;
 
-    // ==========================================
-    // AGENDAR EXAME
-    // ==========================================
 
     @Transactional
     public ExameResponse agendar(
@@ -155,9 +152,6 @@ public class ExameService {
         }
     }
 
-    // ==========================================
-    // LISTAR EXAMES DO USUÁRIO
-    // ==========================================
 
     public List<ExameResponse> listarDoUsuario(
             Long usuarioId
@@ -177,9 +171,6 @@ public class ExameService {
                 .toList();
     }
 
-    // ==========================================
-    // CANCELAR EXAME
-    // ==========================================
 
     @Transactional
     public ExameResponse cancelar(
@@ -209,9 +200,6 @@ public class ExameService {
         );
     }
 
-    // ==========================================
-    // VINCULAR ARQUIVO DO MONGODB AO EXAME
-    // ==========================================
 
     @Transactional
     public ExameResponse vincularArquivo(
@@ -241,10 +229,6 @@ public class ExameService {
                 exameId
         );
 
-        /*
-         * A própria entidade Exame valida se o ID
-         * possui 24 caracteres hexadecimais.
-         */
         exame.definirArquivoId(arquivoId);
 
         return ExameResponse.de(
@@ -252,9 +236,6 @@ public class ExameService {
         );
     }
 
-    // ==========================================
-    // BUSCAR OBJECTID DO ARQUIVO
-    // ==========================================
 
     public String buscarArquivoId(
             Long usuarioId,
@@ -288,9 +269,6 @@ public class ExameService {
         return arquivoId;
     }
 
-    // ==========================================
-    // REMOVER REFERÊNCIA DO ARQUIVO
-    // ==========================================
 
     @Transactional
     public ExameResponse removerArquivo(
@@ -320,9 +298,6 @@ public class ExameService {
         );
     }
 
-    // ==========================================
-    // MÉTODO AUXILIAR
-    // ==========================================
 
     private Exame buscarExameDoUsuario(
             Long usuarioId,

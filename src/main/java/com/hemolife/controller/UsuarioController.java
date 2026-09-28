@@ -114,8 +114,6 @@ public class UsuarioController {
         );
     }
 
-    // CORRIGIDO:
-    // antes era /{id}, o que fazia "exames" ser interpretado como Long
     @GetMapping("/id/{id}")
     public ResponseEntity<Map<String, Object>> buscarPorId(
             @PathVariable Long id

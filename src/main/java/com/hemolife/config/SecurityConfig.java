@@ -38,10 +38,8 @@ public class SecurityConfig {
                         cors.configurationSource(corsConfigurationSource())
                 )
 
-                // Ambiente local/acadêmico.
                 .csrf(AbstractHttpConfigurer::disable)
 
-                // Necessário para HttpSession / JSESSIONID.
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(
                                 SessionCreationPolicy.IF_REQUIRED
@@ -50,22 +48,13 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(authorize -> authorize
 
-                        // ==========================================
-                        // ERRO
-                        // ==========================================
                         .requestMatchers("/error").permitAll()
 
-                        // ==========================================
-                        // PREFLIGHT / CORS
-                        // ==========================================
                         .requestMatchers(
                                 HttpMethod.OPTIONS,
                                 "/**"
                         ).permitAll()
 
-                        // ==========================================
-                        // TESTES
-                        // ==========================================
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/teste",
@@ -73,18 +62,12 @@ public class SecurityConfig {
                                 "/api/teste-mongo"
                         ).permitAll()
 
-                        // ==========================================
-                        // APIs PÚBLICAS
-                        // ==========================================
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/unidades",
                                 "/api/ongs"
                         ).permitAll()
 
-                        // ==========================================
-                        // USUÁRIOS - PÚBLICO
-                        // ==========================================
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/usuarios/cadastrar",
@@ -97,9 +80,6 @@ public class SecurityConfig {
                                 "/usuarios/session"
                         ).permitAll()
 
-                        // ==========================================
-                        // ONG - PÚBLICO
-                        // ==========================================
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/ong/login",
@@ -112,24 +92,15 @@ public class SecurityConfig {
                                 "/ong/session"
                         ).permitAll()
 
-                        // ==========================================
-                        // ADMIN
-                        // ==========================================
                         .requestMatchers(
                                 "/usuarios/admin/**"
                         ).hasRole("ADMIN")
 
-                        // ==========================================
-                        // ONG AUTENTICADA
-                        // ==========================================
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/ong/membros"
                         ).hasRole("ONG")
 
-                        // ==========================================
-                        // DOADOR - ONGs
-                        // ==========================================
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/usuarios/ongs",
@@ -142,18 +113,13 @@ public class SecurityConfig {
                                 "/usuarios/ongs/cancelar/**"
                         ).hasRole("DOADOR")
 
-                        // ==========================================
-                        // DOADOR - EXAMES
-                        // ==========================================
 
-                        // Lista exames e baixa arquivo do MongoDB/GridFS.
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/usuarios/exames",
                                 "/usuarios/exames/*/arquivo"
                         ).hasRole("DOADOR")
 
-                        // Agenda, cancela e envia arquivo para GridFS.
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/usuarios/exames",
@@ -161,26 +127,19 @@ public class SecurityConfig {
                                 "/usuarios/exames/*/arquivo"
                         ).hasRole("DOADOR")
 
-                        // Remove arquivo do MongoDB/GridFS.
                         .requestMatchers(
                                 HttpMethod.DELETE,
                                 "/usuarios/exames/*/arquivo"
                         ).hasRole("DOADOR")
 
-                        // ==========================================
-                        // HOME
-                        // ==========================================
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/usuarios/home"
                         ).authenticated()
 
-                        // Qualquer rota não configurada é bloqueada.
                         .anyRequest().denyAll()
                 )
 
-                // Converte os dados da HttpSession
-                // em autenticação reconhecida pelo Spring Security.
                 .addFilterBefore(
                         sessionAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class
@@ -237,7 +196,6 @@ public class SecurityConfig {
                 List.of("*")
         );
 
-        // Necessário para enviar o cookie JSESSIONID.
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source =

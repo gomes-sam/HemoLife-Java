@@ -22,10 +22,6 @@ public class OngAuthController {
     private final OngService ongService;
     private final InscricaoService inscricaoService;
 
-    // ==========================================
-    // CADASTRO
-    // POST /ong/cadastrar
-    // ==========================================
     @PostMapping("/cadastrar")
     public ResponseEntity<Map<String, Object>> cadastrar(
             @RequestBody Map<String, Object> body
@@ -57,10 +53,6 @@ public class OngAuthController {
                 .body(resposta);
     }
 
-    // ==========================================
-    // LOGIN
-    // POST /ong/login
-    // ==========================================
     @PostMapping("/login")
     public ResponseEntity<Map<String, Object>> login(
             @RequestBody Map<String, Object> body,
@@ -97,10 +89,6 @@ public class OngAuthController {
         return ResponseEntity.ok(resposta);
     }
 
-    // ==========================================
-    // SESSÃO
-    // GET /ong/session
-    // ==========================================
     @GetMapping("/session")
     public ResponseEntity<Map<String, Object>> session(
             HttpSession session
@@ -131,10 +119,6 @@ public class OngAuthController {
         return ResponseEntity.ok(resposta);
     }
 
-    // ==========================================
-    // MEMBROS
-    // GET /ong/membros
-    // ==========================================
     @GetMapping("/membros")
     public ResponseEntity<Map<String, Object>> membros(
             HttpSession session
@@ -153,10 +137,6 @@ public class OngAuthController {
         return ResponseEntity.ok(resposta);
     }
 
-    // ==========================================
-    // LOGOUT
-    // POST /ong/logout
-    // ==========================================
     @PostMapping("/logout")
     public ResponseEntity<Map<String, Object>> logout(
             HttpSession session
@@ -173,9 +153,6 @@ public class OngAuthController {
         );
     }
 
-    // ==========================================
-    // AUXILIARES
-    // ==========================================
     private Long obterOngId(HttpSession session) {
 
         Object ongId = session.getAttribute("ongId");

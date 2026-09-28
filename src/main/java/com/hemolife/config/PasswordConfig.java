@@ -5,7 +5,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-/** Apenas codificacao de novas senhas; nao configura autenticacao ou sessao. */
 @Configuration(proxyBeanMethods = false)
 public class PasswordConfig {
     @Bean

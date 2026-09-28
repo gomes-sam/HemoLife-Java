@@ -5,7 +5,7 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
-/** Singleton explicito: uma unica instancia por classloader, independente do Spring. */
+
 public final class DatabaseManager {
 
     private static final DatabaseManager INSTANCE = new DatabaseManager();
@@ -19,7 +19,7 @@ public final class DatabaseManager {
         return INSTANCE;
     }
 
-    /** Registra o adapter ou substitui o registro existente com o mesmo nome. */
+
     public void registrar(String nome, DatabaseAdapter adapter) {
         validarNome(nome);
         adapters.put(nome, Objects.requireNonNull(adapter, "O adapter nao pode ser nulo."));

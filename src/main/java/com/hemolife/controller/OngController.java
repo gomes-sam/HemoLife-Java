@@ -21,7 +21,6 @@ public class OngController {
     private final OngService ongService;
     private final InscricaoService inscricaoService;
 
-    // GET /usuarios/ongs
     @GetMapping("/ongs")
     public ResponseEntity<Map<String, Object>> listarOngs(
             HttpSession session
@@ -44,7 +43,6 @@ public class OngController {
         return ResponseEntity.ok(resposta);
     }
 
-    // GET /usuarios/minhas-ongs
     @GetMapping("/minhas-ongs")
     public ResponseEntity<Map<String, Object>> listarMinhasOngs(
             HttpSession session
@@ -61,7 +59,6 @@ public class OngController {
         return ResponseEntity.ok(resposta);
     }
 
-    // POST /usuarios/ongs/inscrever/{id}
     @PostMapping("/ongs/inscrever/{id}")
     public ResponseEntity<Map<String, Object>> inscrever(
             @PathVariable Long id,
@@ -80,7 +77,6 @@ public class OngController {
         return ResponseEntity.ok(resposta);
     }
 
-    // POST /usuarios/ongs/cancelar/{id}
     @PostMapping("/ongs/cancelar/{id}")
     public ResponseEntity<Map<String, Object>> cancelarInscricao(
             @PathVariable Long id,
@@ -97,7 +93,6 @@ public class OngController {
         return ResponseEntity.ok(resposta);
     }
 
-    // GET /usuarios/ongs/{id}
     @GetMapping("/ongs/{id}")
     public ResponseEntity<Map<String, Object>> buscarPorId(
             @PathVariable Long id

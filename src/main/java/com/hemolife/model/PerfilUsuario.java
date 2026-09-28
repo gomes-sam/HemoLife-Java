@@ -3,7 +3,6 @@ package com.hemolife.model;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 
-/** Mantem os valores textuais utilizados pelo Flask no PostgreSQL. */
 public enum PerfilUsuario {
     ADMIN("admin"),
     DOADOR("doador");

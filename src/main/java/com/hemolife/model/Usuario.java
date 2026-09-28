@@ -40,7 +40,6 @@ public class Usuario {
     @Column(nullable = false)
     private String email;
 
-    /** Guarda o hash existente; esta etapa nao implementa autenticacao ou hashing. */
     @NotBlank
     @Size(max = 255)
     @Column(nullable = false)

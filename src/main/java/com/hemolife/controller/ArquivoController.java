@@ -27,10 +27,6 @@ public class ArquivoController {
     private final ArquivoService arquivoService;
     private final ExameService exameService;
 
-    // ==========================================
-    // UPLOAD
-    // POST /usuarios/exames/{id}/arquivo
-    // ==========================================
 
     @PostMapping(
             value = "/{id}/arquivo",
@@ -47,9 +43,6 @@ public class ArquivoController {
         String novoArquivoId = null;
         String arquivoAntigoId = null;
 
-        /*
-         * Verifica se o exame já possui um arquivo.
-         */
         try {
             arquivoAntigoId =
                     exameService.buscarArquivoId(
@@ -57,20 +50,13 @@ public class ArquivoController {
                             id
                     );
         } catch (IllegalArgumentException ignored) {
-            // O exame ainda não possui arquivo.
         }
 
         try {
 
-            /*
-             * 1. Salva o arquivo real no MongoDB / GridFS.
-             */
             novoArquivoId =
                     arquivoService.salvar(arquivo);
 
-            /*
-             * 2. Salva somente o ObjectId no PostgreSQL.
-             */
             ExameResponse exame =
                     exameService.vincularArquivo(
                             usuarioId,
@@ -78,11 +64,6 @@ public class ArquivoController {
                             novoArquivoId
                     );
 
-            /*
-             * 3. Se existia um arquivo anterior,
-             * remove ele do Mongo somente depois
-             * que o novo ObjectId foi salvo no PostgreSQL.
-             */
             if (arquivoAntigoId != null
                     && !arquivoAntigoId.equals(novoArquivoId)) {
 
@@ -112,11 +93,6 @@ public class ArquivoController {
 
         } catch (RuntimeException | IOException exception) {
 
-            /*
-             * Se o arquivo novo foi salvo no Mongo,
-             * mas houve erro ao atualizar o PostgreSQL,
-             * remove o arquivo órfão.
-             */
             if (novoArquivoId != null) {
                 arquivoService.excluir(
                         novoArquivoId
@@ -127,10 +103,6 @@ public class ArquivoController {
         }
     }
 
-    // ==========================================
-    // DOWNLOAD
-    // GET /usuarios/exames/{id}/arquivo
-    // ==========================================
 
     @GetMapping("/{id}/arquivo")
     public ResponseEntity<InputStreamResource> baixarArquivo(
@@ -200,10 +172,6 @@ public class ArquivoController {
                 );
     }
 
-    // ==========================================
-    // EXCLUIR
-    // DELETE /usuarios/exames/{id}/arquivo
-    // ==========================================
 
     @DeleteMapping("/{id}/arquivo")
     public ResponseEntity<Map<String, Object>> excluirArquivo(
@@ -214,28 +182,18 @@ public class ArquivoController {
         Long usuarioId =
                 obterUsuarioId(session);
 
-        /*
-         * Primeiro descobre qual ObjectId está ligado
-         * ao exame.
-         */
         String arquivoId =
                 exameService.buscarArquivoId(
                         usuarioId,
                         id
                 );
 
-        /*
-         * Remove a referência do PostgreSQL.
-         */
         ExameResponse exame =
                 exameService.removerArquivo(
                         usuarioId,
                         id
                 );
 
-        /*
-         * Remove o arquivo real do MongoDB/GridFS.
-         */
         arquivoService.excluir(
                 arquivoId
         );
@@ -256,9 +214,6 @@ public class ArquivoController {
         return ResponseEntity.ok(resposta);
     }
 
-    // ==========================================
-    // USUÁRIO DA SESSÃO
-    // ==========================================
 
     private Long obterUsuarioId(
             HttpSession session

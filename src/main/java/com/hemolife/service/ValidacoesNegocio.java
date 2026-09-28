@@ -30,7 +30,6 @@ final class ValidacoesNegocio {
     static String senha(String valor, boolean removerEspacosExternos) {
         texto(valor, "senha");
         String senha = removerEspacosExternos ? valor.trim() : valor;
-        // BCrypt limita a entrada em bytes, nao em quantidade de caracteres.
         if (senha.getBytes(StandardCharsets.UTF_8).length > 72) {
             throw new DadosInvalidosException("A senha deve ter no maximo 72 bytes em UTF-8.");
         }
